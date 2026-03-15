@@ -1,4 +1,4 @@
-```
+```mermaid
 flowchart LR
     %% Стили для рамок и элементов
     classDef boundary fill:none,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
