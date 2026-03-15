@@ -1,3 +1,4 @@
+```mermaid
 graph TD
     subgraph BackendAPI ["Backend API (модульный монолит Java/Kotlin Spring Boot)"]
         
@@ -60,3 +61,4 @@ graph TD
     classDef common fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     class ScheduleDomain,ApplicationsDomain,PassesDomain,NotificationsDomain domain
     class CommonLayer common
+```
