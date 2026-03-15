@@ -4,28 +4,31 @@ sequenceDiagram
     participant Backend as Backend API
     participant AppService as ApplicationService
     participant Repo as ApplicationRepository
+    participant Outbox as Outbox Table<br/>(в PostgreSQL)
     participant Broker as Message Broker<br/>(RabbitMQ)
     participant NotifService as NotificationService
-    participant Gateway as SMS/Email Gateway
 
-    Student->>Backend: POST /applications (с Idempotency-Key)
+    Student->>Backend: POST /applications
     activate Backend
     Backend->>AppService: submitApplication()
-    activate AppService
     AppService->>Repo: save(Application)
-    activate Repo
-    Repo-->>AppService: Application saved
-    deactivate Repo
-    AppService->>Broker: publish(RequestSubmitted)<br/>traceId + event
+    Repo-->>AppService: saved
+    AppService->>Outbox: write event to outbox<br/>(RequestSubmitted + traceId)
     AppService-->>Backend: 201 Created
-    deactivate AppService
-    Backend-->>Student: 201 Created (traceId в заголовке)
+    Backend-->>Student: 201 Created
     deactivate Backend
 
-    Broker->>NotifService: deliver(RequestSubmitted)
-    activate NotifService
-    NotifService->>Gateway: send notification
-    Gateway-->>NotifService: delivered
-    NotifService->>Broker: acknowledge
-    deactivate NotifService
+    Note over Outbox,Broker: Брокер недоступен 4 минуты
+    loop Retry every 30s (circuit breaker + backoff)
+        Outbox->>Broker: publish from outbox
+        alt Брокер всё ещё down
+            Outbox->>Outbox: mark as pending
+        else Брокер доступен
+            Broker->>NotifService: deliver event
+            NotifService->>Outbox: mark as sent
+            Outbox->>Outbox: delete record
+        end
+    end
+
+    Note right of Outbox: Dead Letter Queue при >10 попыток
 ```
