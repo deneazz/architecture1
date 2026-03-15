@@ -28,4 +28,4 @@ sequenceDiagram
     Gateway-->>NotifService: delivered
     NotifService->>Broker: acknowledge
     deactivate NotifService
-    ```
+```
